@@ -29,8 +29,8 @@ export default auth(async function middleware(req) {
   const rootDomain = process.env.NODE_ENV === "production" ? "modulab.online" : "localhost:3000";
   const devDomain = process.env.NODE_ENV === "production" ? "dev.modulab.online" : "dev.localhost:3000";
 
-  const isDevSubdomain = hostname === devDomain;
-  const isRootDomain = hostname === rootDomain;
+  const isRootDomain = hostname === rootDomain || (hostname.includes("modulab") && !hostname.includes("dev."));
+  const isDevSubdomain = hostname === devDomain || hostname.includes("dev.modulab");
 
   // 3. Auth Redirection - Redirect logged-in users away from login/register
   if (isDevSubdomain && isLoggedIn && (path === "/login" || path === "/register")) {
