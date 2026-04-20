@@ -57,8 +57,8 @@ export default auth(async function middleware(req) {
       return NextResponse.rewrite(new URL("/portfolio", req.url));
     }
 
-    // Rewrite all other non-system, non-static paths to /portfolio/[username]
-    return NextResponse.rewrite(new URL(`/portfolio${path}`, req.url));
+    // Rewrite all other non-system, non-static paths to top-level /[username]
+    return NextResponse.rewrite(new URL(path, req.url));
   }
 
   // 6. Root Domain Strategy (Platform Brand)
