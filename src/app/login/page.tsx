@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Loader2, User, UserPlus, LogIn } from "lucide-react";
+import { toast } from "sonner";
 
 function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -28,7 +29,6 @@ function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
       if (isLogin) {
@@ -39,8 +39,9 @@ function AuthForm() {
         });
 
         if (result?.error) {
-          setError("Invalid email or password");
+          toast.error("Invalid email or password");
         } else {
+          toast.success("Welcome back!");
           router.push(callbackUrl);
           router.refresh();
         }
@@ -54,26 +55,22 @@ function AuthForm() {
         const data = await response.json();
 
         if (data.success) {
-          // Auto login after registration
-          const result = await signIn("credentials", {
-            redirect: false,
-            email: formData.email,
-            password: formData.password,
-          });
-
-          if (result?.error) {
-            setError("Registration successful, but login failed. Please login manually.");
-            setIsLogin(true);
-          } else {
-            router.push(callbackUrl);
-            router.refresh();
-          }
+          toast.success("Account created successfully! Please sign in.");
+          setIsLogin(true);
+          // Optional: Clear sensitive fields but keep email for convenience
+          setFormData(prev => ({
+            ...prev,
+            password: "",
+            username: "",
+            firstName: "",
+            lastName: ""
+          }));
         } else {
-          setError(data.error || "Registration failed. Please try again.");
+          toast.error(data.error || "Registration failed. Please try again.");
         }
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
