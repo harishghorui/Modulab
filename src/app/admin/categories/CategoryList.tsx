@@ -24,7 +24,7 @@ export default function CategoryList({ initialCategories }: CategoryListProps) {
 
   const [state, formAction, isPending] = useActionState(
     saveCategory,
-    { error: null, success: false, category: null }
+    { success: false, category: null, error: undefined }
   );
 
   const lastProcessedStateRef = useRef(state);

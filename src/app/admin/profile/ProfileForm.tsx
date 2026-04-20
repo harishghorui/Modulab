@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   FileDown,
   Upload,
+  CheckCircle2,
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
 import { cn, isPdf } from '@/lib/utils';

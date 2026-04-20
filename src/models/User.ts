@@ -1,6 +1,15 @@
-import { Schema, model, models } from 'mongoose';
+import { Schema, model, models, Document } from 'mongoose';
 
-const UserSchema = new Schema({
+export interface IUser extends Document {
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+  fullName: string;
+}
+
+const UserSchema = new Schema<IUser>({
   username: {
     type: String,
     required: [true, 'Please provide a username'],
@@ -36,6 +45,6 @@ UserSchema.virtual('fullName').get(function() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-const User = models.User || model('User', UserSchema);
+const User = models.User || model<IUser>('User', UserSchema);
 
 export default User;

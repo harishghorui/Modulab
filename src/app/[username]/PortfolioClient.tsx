@@ -83,7 +83,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
               className="flex-1 text-center md:text-left order-2 md:order-1"
             >
               <motion.div
@@ -224,7 +224,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                 className="group relative grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 items-start"
               >
                 {/* Image Side */}

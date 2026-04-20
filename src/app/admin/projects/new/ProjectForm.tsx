@@ -25,7 +25,7 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import { toast } from 'sonner';
 
 const initialState = {
-  error: null,
+  error: undefined,
 };
 
 interface ProjectFormProps {

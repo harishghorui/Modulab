@@ -17,10 +17,10 @@ interface Props {
 async function getPortfolioData(username: string) {
   await dbConnect();
 
-  const user = await User.findOne({ username: username.toLowerCase() }).lean();
+  const user = (await User.findOne({ username: username.toLowerCase() }).lean()) as any;
   if (!user) return null;
 
-  const [profile, projects, skills, skillCategories] = await Promise.all([
+  const [profile, projects, skills, skillCategories] = (await Promise.all([
     Profile.findOne({ userId: user._id }).lean(),
     Project.find({ userId: user._id })
       .populate('techStack')
@@ -29,7 +29,7 @@ async function getPortfolioData(username: string) {
       .lean(),
     Skill.find({ userId: user._id }).populate('category').lean(),
     SkillCategory.find({ userId: user._id }).sort({ name: 1 }).lean(),
-  ]);
+  ])) as any[];
 
   if (profile && profile.resumeUrl) {
     profile.resumeUrl = getDownloadUrl(profile.resumeUrl);

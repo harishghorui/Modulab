@@ -94,13 +94,13 @@ export default function SkillManager({ initialSkills, initialCategories }: Skill
   // Skill Category Action
   const [catState, catAction, catPending] = useActionState(
     saveSkillCategory,
-    { error: null, success: false, category: null }
+    { success: false, category: null, error: undefined }
   );
 
   // Skill Action
   const [skillState, skillAction, skillPending] = useActionState(
     saveSkill,
-    { error: null, success: false, skill: null }
+    { success: false, skill: null, error: undefined }
   );
 
   const lastProcessedCatStateRef = useRef(catState);
