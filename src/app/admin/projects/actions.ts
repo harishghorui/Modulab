@@ -6,6 +6,7 @@ import Project from '@/models/Project';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { v2 as cloudinary } from 'cloudinary';
+import { getCloudinaryPath } from '@/lib/cloudinary';
 import mongoose from 'mongoose';
 
 // Configure Cloudinary
@@ -61,7 +62,9 @@ export async function createProject(prevState: any, formData: FormData) {
   if (imageBase64) {
     try {
       const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-        upload_preset: 'portfolio_preset',
+        folder: getCloudinaryPath(session.user.username!, 'Project_Images'),
+        use_filename: true,
+        unique_filename: true,
       });
       imageUrl = uploadResponse.secure_url;
     } catch (error: any) {
@@ -153,7 +156,9 @@ export async function updateProject(projectId: string, prevState: any, formData:
     if (imageBase64 && imageBase64.startsWith('data:image')) {
       try {
         const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-          upload_preset: 'portfolio_preset',
+          folder: getCloudinaryPath(session.user.username!, 'Project_Images'),
+          use_filename: true,
+          unique_filename: true,
         });
         imageUrl = uploadResponse.secure_url;
       } catch (error: any) {

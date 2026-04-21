@@ -50,8 +50,9 @@ const itemVariants = {
 export default function PortfolioClient({ data }: PortfolioClientProps) {
   const { user, profile, projects, skills, skillCategories } = data;
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
-  const [visibleCount, setVisibleCount] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const projectsPerPage = 3;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,19 +73,27 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
     }));
   };
 
-  const loadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 3, projects.length));
-  };
-
-  const showLess = () => {
-    setVisibleCount(3);
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
     const projectsSection = document.getElementById('projects');
     if (projectsSection) {
-      projectsSection.scrollIntoView({ behavior: 'smooth' });
+      const offset = 80; // Account for fixed nav
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = projectsSection.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
   const fullName = `${user.firstName} ${user.lastName}`;
+  const visibleProjects = projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage);
 
   const groupedSkills = skillCategories.map(cat => ({
     ...cat,
@@ -125,8 +134,6 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
       window.location.href = resumeDownloadUrl;
     }
   };
-
-  const visibleProjects = projects.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 selection:bg-blue-100 dark:selection:bg-blue-900/30">
@@ -287,7 +294,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                 className={`group relative grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 items-start pb-24 md:pb-32 ${
-                  idx !== visibleProjects.length - 1 || visibleCount < projects.length ? 'border-b border-zinc-100 dark:border-zinc-900' : ''
+                  idx !== visibleProjects.length - 1 ? 'border-b border-zinc-100 dark:border-zinc-900' : ''
                 }`}
               >
                 {/* Image Side */}
@@ -349,16 +356,16 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                   </h3>
                   
                   {/* Stable Height Container for Summary and Description */}
-                  <div className="relative min-h-[auto] md:min-h-[320px] mb-8 overflow-hidden">
+                  <div className="relative min-h-[auto] md:min-h-[260px] mb-6 overflow-hidden">
                     {/* Summary - Visible by default, hidden on hover */}
                     <motion.div 
-                      className="relative md:absolute inset-0 transition-all duration-500 group-hover:opacity-0 group-hover:pointer-events-none"
+                      className="relative md:absolute inset-0 transition-all duration-500 group-hover:opacity-0 group-hover:pointer-events-none flex flex-col h-full"
                     >
-                      <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mb-8 md:mb-0">
+                      <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
                         {project.summary}
                       </p>
                       
-                      <div className="mt-10 hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-widest animate-bounce-x">
+                      <div className="mt-6 md:mt-auto hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-widest animate-bounce-x">
                         Hover to explore details
                         <ChevronRight className="w-4 h-4" />
                       </div>
@@ -397,7 +404,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                     </motion.div>
                   </div>
 
-                  <div className="mt-auto pt-8 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
+                  <div className="mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
                     <div className="flex -space-x-3">
                       {project.techStack?.map((skill: any) => (
                         <div key={skill._id} className="group/tech relative w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border-4 border-white dark:border-[#050505] p-2 shadow-sm flex items-center justify-center transition-transform hover:scale-110 hover:z-50" title={skill.name}>
@@ -418,25 +425,39 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             ))}
           </div>
 
-          {projects.length > 3 && (
-            <div className="mt-24 flex flex-col items-center gap-6">
-              {visibleCount < projects.length ? (
-                <button 
-                  onClick={loadMore}
-                  className="inline-flex items-center gap-3 px-10 py-5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[20px] font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
-                >
-                  Load More Projects ({projects.length - visibleCount})
-                  <ChevronRight className="w-5 h-5 rotate-90" />
-                </button>
-              ) : (
-                <button 
-                  onClick={showLess}
-                  className="inline-flex items-center gap-3 px-10 py-5 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-[20px] font-black text-lg hover:scale-105 active:scale-95 transition-all"
-                >
-                  Show Less
-                  <ChevronRight className="w-5 h-5 -rotate-90" />
-                </button>
-              )}
+          {totalPages > 1 && (
+            <div className="mt-24 flex items-center justify-center gap-2">
+              <button 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="w-12 h-12 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold text-sm transition-all ${
+                      currentPage === page 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                        : 'border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="w-12 h-12 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           )}
         </div>

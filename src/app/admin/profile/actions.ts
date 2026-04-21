@@ -6,6 +6,7 @@ import Profile from '@/models/Profile';
 import User from '@/models/User';
 import { revalidatePath } from 'next/cache';
 import { v2 as cloudinary } from 'cloudinary';
+import { getCloudinaryPath } from '@/lib/cloudinary';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -71,7 +72,9 @@ export async function updateProfile(prevState: any, formData: FormData) {
     if (imageBase64 && imageBase64.startsWith('data:image')) {
       try {
         const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-          upload_preset: 'portfolio_preset',
+          folder: getCloudinaryPath(username, 'Profile_Photos'),
+          use_filename: true,
+          unique_filename: true,
         });
         imageUrl = uploadResponse.secure_url;
       } catch (error: any) {
@@ -96,19 +99,17 @@ export async function updateProfile(prevState: any, formData: FormData) {
         }
 
         // Use a clean ID with extension. Raw files MUST include the extension in public_id.
-        const cleanId = `resume_${session.user.id}_${Date.now()}${extension}`;
+        const cleanId = `resume_${username}_${Date.now()}${extension}`;
         
         const uploadResponse = await cloudinary.uploader.upload(resumeBase64, {
           resource_type: 'raw', // Force raw for all formats to trigger browser download behavior
           public_id: cleanId,
-          folder: 'resumes',
+          folder: getCloudinaryPath(username, 'Resumes'),
+          use_filename: true,
+          unique_filename: false, // Keep false for resumes to favor our cleanId
+          overwrite: true,
           filename_override: `resume${extension}`,
           display_name: `resume${extension}`,
-          use_filename: false,
-          unique_filename: false,
-          overwrite: true,
-          context: '', 
-          tags: [],
         });
         resumeUrl = uploadResponse.secure_url;
       } catch (error: any) {
