@@ -23,14 +23,19 @@ export default auth(async function middleware(req) {
 
   const hostname = req.headers.get("host") || "";
   const isLoggedIn = !!req.auth;
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-
+  
   // Define domains
   const rootDomain = process.env.NODE_ENV === "production" ? "modulab.online" : "localhost:3000";
   const devDomain = process.env.NODE_ENV === "production" ? "dev.modulab.online" : "dev.localhost:3000";
 
-  const isRootDomain = hostname === rootDomain || (hostname.includes("modulab") && !hostname.includes("dev."));
-  const isDevSubdomain = hostname === devDomain || hostname.includes("dev.modulab");
+  // Check hostname (ignoring port if present)
+  const hostOnly = hostname.split(':')[0];
+  const isRootDomain = hostOnly === rootDomain || (hostOnly.endsWith("modulab.online") && !hostOnly.includes("dev."));
+  const isDevSubdomain = hostOnly === devDomain || hostOnly.startsWith("dev.");
+
+  // Determine protocol (check x-forwarded-proto if behind proxy)
+  const protoHeader = req.headers.get("x-forwarded-proto");
+  const protocol = protoHeader || (process.env.NODE_ENV === "production" ? "https" : "http");
 
   // 3. Auth Redirection - Redirect logged-in users away from login/register
   if (isDevSubdomain && isLoggedIn && (path === "/login" || path === "/register")) {
@@ -57,8 +62,9 @@ export default auth(async function middleware(req) {
       return NextResponse.rewrite(new URL("/portfolio", req.url));
     }
 
-    // Rewrite all other non-system, non-static paths to top-level /[username]
-    return NextResponse.rewrite(new URL(path, req.url));
+    // All other paths are naturally handled by Next.js as /[username]
+    // A rewrite to the same URL can sometimes cause issues in production proxies
+    return NextResponse.next();
   }
 
   // 6. Root Domain Strategy (Platform Brand)
