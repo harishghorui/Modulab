@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Globe, 
@@ -23,8 +23,67 @@ interface PortfolioClientProps {
   };
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.9, y: 20 },
+  visible: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 20
+    }
+  }
+};
+
 export default function PortfolioClient({ data }: PortfolioClientProps) {
   const { user, profile, projects, skills, skillCategories } = data;
+  const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
+  const [visibleCount, setVisibleCount] = useState(3);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setHasScrolled(true);
+      } else {
+        setHasScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects(prev => ({
+      ...prev,
+      [projectId]: !prev[projectId]
+    }));
+  };
+
+  const loadMore = () => {
+    setVisibleCount(prev => Math.min(prev + 3, projects.length));
+  };
+
+  const showLess = () => {
+    setVisibleCount(3);
+    const projectsSection = document.getElementById('projects');
+    if (projectsSection) {
+      projectsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const fullName = `${user.firstName} ${user.lastName}`;
 
   const groupedSkills = skillCategories.map(cat => ({
@@ -66,6 +125,8 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
       window.location.href = resumeDownloadUrl;
     }
   };
+
+  const visibleProjects = projects.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 selection:bg-blue-100 dark:selection:bg-blue-900/30">
@@ -190,9 +251,9 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
         {/* Scroll indicator */}
         <motion.div 
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
+          animate={{ opacity: hasScrolled ? 0 : 1 }}
+          transition={{ duration: 0.5 }}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 pointer-events-none"
         >
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Scroll</span>
           <div className="w-[2px] h-12 bg-gradient-to-b from-blue-600 to-transparent rounded-full" />
@@ -217,19 +278,21 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-24 md:gap-48">
-            {projects.map((project, idx) => (
+          <div className="flex flex-col gap-32 md:gap-48">
+            {visibleProjects.map((project, idx) => (
               <motion.div 
                 key={project._id}
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-                className="group relative grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 items-start"
+                className={`group relative grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 items-start pb-24 md:pb-32 ${
+                  idx !== visibleProjects.length - 1 || visibleCount < projects.length ? 'border-b border-zinc-100 dark:border-zinc-900' : ''
+                }`}
               >
                 {/* Image Side */}
-                <div className="lg:col-span-7 order-2 lg:order-1 lg:sticky lg:top-32">
-                  <div className="relative aspect-[16/10] rounded-[48px] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shadow-2xl group-hover:shadow-blue-500/20 transition-all duration-700">
+                <div className="lg:col-span-7 order-1 lg:order-1 lg:sticky lg:top-32">
+                  <div className="relative aspect-[16/10] rounded-[32px] md:rounded-[48px] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shadow-2xl group-hover:shadow-blue-500/20 transition-all duration-700">
                     <img 
                       src={project.image} 
                       alt={project.title} 
@@ -244,9 +307,9 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                           href={project.liveLink} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="w-20 h-20 bg-white rounded-3xl text-black flex items-center justify-center shadow-2xl transition-all"
+                          className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-3xl text-black flex items-center justify-center shadow-2xl transition-all"
                         >
-                          <ExternalLink className="w-8 h-8" />
+                          <ExternalLink className="w-6 h-6 md:w-8 md:h-8" />
                         </motion.a>
                       )}
                       {project.githubLink && (
@@ -256,15 +319,15 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                           href={project.githubLink} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="w-20 h-20 bg-zinc-900 rounded-3xl text-white flex items-center justify-center shadow-2xl border border-zinc-800 transition-all"
+                          className="w-16 h-16 md:w-20 md:h-20 bg-zinc-900 rounded-2xl md:rounded-3xl text-white flex items-center justify-center shadow-2xl border border-zinc-800 transition-all"
                         >
-                          <FaGithub className="w-8 h-8" />
+                          <FaGithub className="w-6 h-6 md:w-8 md:h-8" />
                         </motion.a>
                       )}
                     </div>
                     {project.featured && (
-                      <div className="absolute top-10 left-10 px-6 py-2.5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 border border-white/20 shadow-xl">
-                        <span className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                      <div className="absolute top-4 left-4 md:top-10 md:left-10 px-4 py-1.5 md:px-6 md:py-2.5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl md:rounded-2xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3 border border-white/20 shadow-xl z-20">
+                        <span className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
                         Featured
                       </div>
                     )}
@@ -272,7 +335,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                 </div>
 
                 {/* Content Side */}
-                <div className="lg:col-span-5 order-1 lg:order-2 lg:pt-4 h-full flex flex-col">
+                <div className="lg:col-span-5 order-2 lg:order-2 lg:pt-4 h-full flex flex-col">
                   <div className="flex flex-wrap gap-2 mb-8">
                     {project.category?.map((cat: any) => (
                       <span key={cat._id} className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5 rounded-full border border-blue-100/50 dark:border-blue-900/20">
@@ -281,41 +344,51 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
                     ))}
                   </div>
                   
-                  <h3 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter leading-[0.95] group-hover:text-blue-600 transition-colors duration-500">
+                  <h3 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter leading-[0.95] group-hover:text-blue-600 transition-colors duration-500">
                     {project.title}
                   </h3>
                   
                   {/* Stable Height Container for Summary and Description */}
-                  <div className="relative min-h-[320px] mb-8 overflow-hidden">
+                  <div className="relative min-h-[auto] md:min-h-[320px] mb-8 overflow-hidden">
                     {/* Summary - Visible by default, hidden on hover */}
                     <motion.div 
-                      className="absolute inset-0 transition-all duration-500 group-hover:opacity-0 group-hover:pointer-events-none"
+                      className="relative md:absolute inset-0 transition-all duration-500 group-hover:opacity-0 group-hover:pointer-events-none"
                     >
-                      <p className="text-xl md:text-2xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
+                      <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mb-8 md:mb-0">
                         {project.summary}
                       </p>
                       
-                      <div className="mt-12">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-6 block">Tech Stack</span>
-                        <div className="flex flex-wrap items-center gap-3">
-                          {project.techStack?.slice(0, 8).map((skill: any) => (
-                            <div key={skill._id} className="px-4 py-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800/50 flex items-center gap-2.5 transition-all">
-                              <i className={`${skill.icon} text-sm opacity-70`}></i>
-                              <span className="text-[11px] font-bold uppercase tracking-wider">{skill.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="mt-10 flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-widest animate-bounce-x">
+                      <div className="mt-10 hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-widest animate-bounce-x">
                         Hover to explore details
                         <ChevronRight className="w-4 h-4" />
                       </div>
+
+                      {/* Mobile view description toggle */}
+                      <div className="mt-8 md:hidden">
+                        <button 
+                          onClick={() => toggleProject(project._id)}
+                          className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-widest mb-6"
+                        >
+                          {expandedProjects[project._id] ? 'Hide Details' : 'View Details'}
+                          <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${expandedProjects[project._id] ? 'rotate-90' : ''}`} />
+                        </button>
+                        
+                        {expandedProjects[project._id] && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            transition={{ duration: 0.4, ease: "easeOut" }}
+                            className="overflow-hidden"
+                          >
+                            <ProjectDetail description={project.description} />
+                          </motion.div>
+                        )}
+                      </div>
                     </motion.div>
 
-                    {/* Detailed Description - Visible on hover, scrollable */}
+                    {/* Detailed Description - Visible on hover, scrollable (Desktop Only) */}
                     <motion.div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 overflow-y-auto custom-scrollbar pr-4"
+                      className="hidden md:block absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 overflow-y-auto custom-scrollbar pr-4"
                     >
                       <div className="pb-8">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-6 block">In-depth Project Details</span>
@@ -326,9 +399,13 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
 
                   <div className="mt-auto pt-8 border-t border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
                     <div className="flex -space-x-3">
-                      {project.techStack?.slice(0, 10).map((skill: any) => (
-                        <div key={skill._id} className="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border-4 border-white dark:border-[#050505] p-2 shadow-sm flex items-center justify-center" title={skill.name}>
+                      {project.techStack?.map((skill: any) => (
+                        <div key={skill._id} className="group/tech relative w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border-4 border-white dark:border-[#050505] p-2 shadow-sm flex items-center justify-center transition-transform hover:scale-110 hover:z-50" title={skill.name}>
                           <i className={`${skill.icon} text-lg`}></i>
+                          {/* Minimal Tooltip */}
+                          <div className="absolute bottom-full mb-2 px-2 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded opacity-0 group-hover/tech:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                            {skill.name}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -340,6 +417,28 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
               </motion.div>
             ))}
           </div>
+
+          {projects.length > 3 && (
+            <div className="mt-24 flex flex-col items-center gap-6">
+              {visibleCount < projects.length ? (
+                <button 
+                  onClick={loadMore}
+                  className="inline-flex items-center gap-3 px-10 py-5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[20px] font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
+                >
+                  Load More Projects ({projects.length - visibleCount})
+                  <ChevronRight className="w-5 h-5 rotate-90" />
+                </button>
+              ) : (
+                <button 
+                  onClick={showLess}
+                  className="inline-flex items-center gap-3 px-10 py-5 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-[20px] font-black text-lg hover:scale-105 active:scale-95 transition-all"
+                >
+                  Show Less
+                  <ChevronRight className="w-5 h-5 -rotate-90" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -368,53 +467,60 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             </motion.h2>
           </div>
 
-          <div className="space-y-32">
+          <div className="space-y-24 md:space-y-32">
             {groupedSkills.map((category, idx) => (
-              <motion.div 
+              <div 
                 key={category._id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, delay: idx * 0.1 }}
-                className="relative"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16"
               >
-                {/* Category Header with line */}
-                <div className="flex items-center gap-8 mb-16">
-                  <h3 className="text-sm font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-500 whitespace-nowrap">
-                    {category.name}
-                  </h3>
-                  <div className="h-[1px] w-full bg-gradient-to-r from-blue-600/20 to-transparent" />
+                {/* Category Header */}
+                <div className="lg:col-span-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: idx * 0.1 }}
+                  >
+                    <h3 className="text-2xl md:text-3xl font-black mb-4 tracking-tight text-zinc-900 dark:text-white">
+                      {category.name}
+                    </h3>
+                    <div className="h-1 w-12 bg-blue-600 rounded-full" />
+                    <p className="mt-6 text-zinc-500 dark:text-zinc-400 text-sm font-medium leading-relaxed max-w-xs">
+                      Specialized tools and technologies I use to build high-quality {category.name.toLowerCase()} solutions.
+                    </p>
+                  </motion.div>
                 </div>
                 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-12 gap-y-16 md:gap-x-20 md:gap-y-20">
-                  {category.skills.map((skill: any) => (
-                    <div 
-                      key={skill._id}
-                      className="group/skill relative flex flex-col items-center"
-                    >
-                      {/* Floating Tooltip - Glassmorphism style */}
-                      <div className="absolute bottom-full mb-6 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl opacity-0 translate-y-4 pointer-events-none group-hover/skill:opacity-100 group-hover/skill:translate-y-0 transition-all duration-500 z-50 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)]">
-                        <span className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-white whitespace-nowrap">
-                          {skill.name}
-                        </span>
-                        {/* Tooltip Arrow */}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-white/80 dark:border-t-zinc-900/80" />
-                      </div>
-
-                      {/* Icon Container with Glow */}
+                {/* Skills Grid */}
+                <div className="lg:col-span-8">
+                  <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.2 }}
+                    className="flex flex-wrap gap-4 md:gap-6"
+                  >
+                    {category.skills.map((skill: any) => (
                       <motion.div 
-                        whileHover={{ y: -10, scale: 1.1 }}
-                        className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center transition-all duration-500 cursor-none"
+                        key={skill._id}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05, y: -5 }}
+                        className="group/skill relative px-5 py-4 md:px-6 md:py-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800/50 flex items-center gap-4 transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_20px_50px_-20px_rgba(37,99,235,0.2)] dark:hover:bg-zinc-900"
                       >
-                        {/* Hover Radial Glow */}
-                        <div className="absolute inset-0 bg-blue-500/0 group-hover/skill:bg-blue-500/20 rounded-full blur-2xl transition-all duration-500 scale-0 group-hover/skill:scale-150" />
+                        {/* Subtle Background Glow on Hover */}
+                        <div className="absolute inset-0 bg-blue-500/0 group-hover/skill:bg-blue-500/5 rounded-2xl transition-all duration-500" />
                         
-                        <i className={`${skill.icon} text-5xl md:text-6xl relative z-10 transition-all duration-500 grayscale group-hover/skill:grayscale-0 drop-shadow-sm group-hover/skill:drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]`}></i>
+                        <i className={`${skill.icon} text-3xl md:text-4xl relative z-10 transition-all duration-500 drop-shadow-sm group-hover/skill:drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]`}></i>
+                        <div className="relative z-10">
+                          <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 group-hover/skill:text-zinc-900 dark:group-hover/skill:text-white transition-colors">
+                            {skill.name}
+                          </span>
+                        </div>
                       </motion.div>
-                    </div>
-                  ))}
+                    ))}
+                  </motion.div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -481,7 +587,7 @@ export default function PortfolioClient({ data }: PortfolioClientProps) {
             <div className="flex items-center gap-6">
               <a href="#" className="hover:text-blue-600 transition-colors">Back to top</a>
               <span className="w-1 h-1 bg-zinc-800 rounded-full" />
-              <span>Built with Portfolio CMS</span>
+              <span>Built with <a href="https://modulab.online" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">Modulab Dev</a></span>
             </div>
           </div>
         </div>
