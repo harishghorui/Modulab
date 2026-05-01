@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Modulab
 
-## Getting Started
+Modulab is a high-performance, multi-tenant "Operating System for Developers." It serves as a unified platform where developers can manage and showcase their digital presence through various specialized modules, starting with a robust Portfolio CMS.
 
-First, run the development server:
+## 🚀 Architecture
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Modulab uses a sophisticated subdomain-based routing strategy to separate the core platform brand from its individual products:
+
+- **Platform (`modulab.online` / `localhost:3000`):** The main landing page and brand identity. Strictly handles platform-wide information and system routes.
+- **Portfolio Product (`dev.modulab.online` / `dev.localhost:3000`):** The home for the Portfolio CMS. This is where user portfolios are served (e.g., `dev.modulab.online/username`) and where the landing page for the portfolio product lives.
+
+## 🛠 Tech Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS & Framer Motion (for high-fidelity animations)
+- **Database:** MongoDB with Mongoose
+- **Auth:** NextAuth.js (Auth.js)
+- **Media:** Cloudinary (Image & Video Management)
+- **Icons:** Lucide React & React Icons
+
+## 📂 Project Structure
+
+```text
+src/
+├── app/
+│   ├── [username]/      # Dynamic user portfolio routes (Subdomain)
+│   ├── admin/           # Admin dashboard for CMS
+│   ├── platform/        # Root domain landing page
+│   ├── portfolio/       # Subdomain landing page
+│   └── api/             # Backend API routes
+├── components/          # Shared UI & Admin components
+├── lib/                 # Utility functions & DB config
+├── models/              # Mongoose schemas
+└── middleware.ts        # Advanced multi-tenant routing logic
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚥 Routing Rules
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The `middleware.ts` enforces strict boundaries:
+1. **Root Domain:** Only `/` (rewritten to `/platform`) and `/admin`, `/api`, `/login`, etc., are allowed. Other paths (like `/username`) return a 404.
+2. **Subdomain (`dev.`):** The root `/` rewrites to `/portfolio`. Usernames are served directly at the root (e.g., `/harishghorui` -> `src/app/[username]/page.tsx`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Development
 
-## Learn More
+### Prerequisites
+- Node.js 18+
+- MongoDB instance
+- Cloudinary account
 
-To learn more about Next.js, take a look at the following resources:
+### Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/modulab.git
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. Set up environment variables (`.env.local`):
+   ```env
+   MONGODB_URI=
+   NEXTAUTH_SECRET=
+   NEXTAUTH_URL=http://dev.localhost:3000
+   CLOUDINARY_CLOUD_NAME=
+   CLOUDINARY_API_KEY=
+   CLOUDINARY_API_SECRET=
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To test subdomains locally, you may need to map `dev.localhost` to `127.0.0.1` in your `/etc/hosts` file.
+
+## 📄 License
+
+Internal use only. Part of the Modulab ecosystem.

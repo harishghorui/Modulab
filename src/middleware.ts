@@ -5,18 +5,19 @@ import { authConfig } from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 const SYSTEM_ROUTES = ["/admin", "/api", "/login", "/register", "/dashboard"];
+const INTERNAL_ROUTES = ["/platform", "/portfolio"];
 const STATIC_ASSETS = [".png", ".jpg", ".jpeg", ".svg", ".css", ".js", ".ico", ".webp", ".map"];
 
 export default auth(async function middleware(req) {
   const url = req.nextUrl;
   let path = url.pathname;
 
-  // 1. Static Asset Performance - Return immediately to skip domain/auth logic
+  // 1. Static Asset Performance
   if (STATIC_ASSETS.some((ext) => path.toLowerCase().endsWith(ext))) {
     return NextResponse.next();
   }
 
-  // 2. Path Normalization - Remove trailing slashes (except for root)
+  // 2. Path Normalization
   if (path.length > 1 && path.endsWith("/")) {
     path = path.slice(0, -1);
   }
@@ -24,54 +25,46 @@ export default auth(async function middleware(req) {
   const hostname = req.headers.get("host") || "";
   const isLoggedIn = !!req.auth;
   
-  // Define domains
-  const rootDomain = process.env.NODE_ENV === "production" ? "modulab.online" : "localhost:3000";
-  const devDomain = process.env.NODE_ENV === "production" ? "dev.modulab.online" : "dev.localhost:3000";
+  // 3. Hostname Logic
+  const hostOnly = hostname.split(":")[0];
+  const isDevSubdomain = hostOnly.startsWith("dev.");
+  const isRootDomain = !isDevSubdomain;
 
-  // Check hostname (ignoring port if present)
-  const hostOnly = hostname.split(':')[0];
-  const isRootDomain = hostOnly === rootDomain || (hostOnly.endsWith("modulab.online") && !hostOnly.includes("dev."));
-  const isDevSubdomain = hostOnly === devDomain || hostOnly.startsWith("dev.");
-
-  // Determine protocol (check x-forwarded-proto if behind proxy)
-  const protoHeader = req.headers.get("x-forwarded-proto");
-  const protocol = protoHeader || (process.env.NODE_ENV === "production" ? "https" : "http");
-
-  // 3. Auth Redirection - Redirect logged-in users away from login/register
+  // 4. Auth Redirection
   if (isDevSubdomain && isLoggedIn && (path === "/login" || path === "/register")) {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
-  // 4. System Priority - Handle restricted routes and system bypass
-  if (SYSTEM_ROUTES.some((route) => path.startsWith(route))) {
-    // If on root domain and trying to access restricted system routes, redirect to dev subdomain
-    if (isRootDomain) {
-      const restrictedPaths = ["/admin", "/login", "/register", "/dashboard"];
-      if (restrictedPaths.some((p) => path.startsWith(p))) {
-        const redirectUrl = new URL(path, `${protocol}://${devDomain}`);
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
-    return NextResponse.next();
-  }
+  // 5. Route Classification
+  const isSystemRoute = SYSTEM_ROUTES.some((route) => path.startsWith(route));
+  const isInternalRoute = INTERNAL_ROUTES.some((route) => path.startsWith(route));
 
-  // 5. Dev Subdomain Strategy (Portfolio Product)
-  if (isDevSubdomain) {
-    // Rewrite root of subdomain to /portfolio
-    if (path === "/") {
-      return NextResponse.rewrite(new URL("/portfolio", req.url));
-    }
-
-    // All other paths are naturally handled by Next.js as /[username]
-    // A rewrite to the same URL can sometimes cause issues in production proxies
-    return NextResponse.next();
-  }
-
-  // 6. Root Domain Strategy (Platform Brand)
+  // 6. Root Domain Strategy (Platform)
   if (isRootDomain) {
-    // Rewrite root to /platform
+    // Only allow root / and system routes
     if (path === "/") {
       return NextResponse.rewrite(new URL("/platform", req.url));
+    }
+
+    if (isSystemRoute || isInternalRoute) {
+      return NextResponse.next();
+    }
+
+    // Protection: Any other path on root domain should NOT resolve to a portfolio.
+    // We rewrite to a non-existent path to trigger a 404 for this domain.
+    return NextResponse.rewrite(new URL("/404", req.url));
+  }
+
+  // 7. Subdomain Strategy (Portfolio Product)
+  if (isDevSubdomain) {
+    if (!isSystemRoute && !isInternalRoute) {
+      // Rewrite root of dev subdomain to the portfolio landing page
+      if (path === "/") {
+        return NextResponse.rewrite(new URL("/portfolio", req.url));
+      }
+      
+      // Other paths (like /username) are served by the dynamic [username] route
+      return NextResponse.next();
     }
   }
 
@@ -80,11 +73,6 @@ export default auth(async function middleware(req) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     */
     "/((?!_next/static|_next/image).*)",
   ],
 };
