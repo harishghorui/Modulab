@@ -64,6 +64,10 @@ export default async function AdminPage() {
     }
   ];
 
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const baseDomain = process.env.NODE_ENV === "production" ? "modulab.online" : "localhost:3000";
+  const portfolioUrl = `${protocol}://dev.${baseDomain}/${session.user.username || ''}`;
+
   return (
     <div className="space-y-10">
       <AdminDashboard />
@@ -77,7 +81,7 @@ export default async function AdminPage() {
           </p>
         </div>
         <a 
-          href={`/${session.user.username || ''}`}
+          href={portfolioUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all shadow-sm group"

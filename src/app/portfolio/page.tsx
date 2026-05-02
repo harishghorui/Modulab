@@ -1,6 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import Image from 'next/image';
 import { 
   FaChevronRight, 
   FaGithub, 
@@ -33,10 +35,16 @@ export default function PortfolioProductPage() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
         <div className="container max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white">M</div>
-            <span className="font-black text-xl tracking-tighter">Modulab <span className="text-blue-500">Dev</span></span>
-          </div>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/branding/logo-full.png"
+              alt="Modulab"
+              width={240}
+              height={64}
+              priority
+              className="h-12 w-auto"
+            />
+          </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#tech" className="hover:text-white transition-colors">Tech Stack</a>
@@ -201,10 +209,15 @@ export default function PortfolioProductPage() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-white/5">
         <div className="container max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-2 opacity-50">
-            <div className="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center font-black text-[10px]">M</div>
-            <span className="font-bold text-sm tracking-tighter">Modulab Dev</span>
-          </div>
+          <Link href="/" className="flex items-center opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/branding/logo-full.png"
+              alt="Modulab"
+              width={180}
+              height={52}
+              className="h-10 w-auto"
+            />
+          </Link>
           
           <div className="flex items-center gap-10 text-xs font-black uppercase tracking-widest text-zinc-500">
             <a href={loginUrl} className="hover:text-white transition-colors">Admin Dashboard</a>

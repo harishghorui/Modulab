@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -60,14 +61,16 @@ export function AdminSidebar({ user, profile }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-screen sticky top-0">
-      <div className="p-6">
-        <Link href="/admin" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-sm">
-            M
-          </div>
-          Modulab
-        </Link>
-      </div>
+      <Link href="/admin" className="flex items-center pl-6 py-3">
+        <Image
+          src="/branding/logo-full.png"
+          alt="Modulab"
+          width={220}
+          height={72}
+          priority
+          className="h-14 w-auto"
+        />
+      </Link>
 
       <nav className="flex-1 px-4 space-y-1">
         {navItems.map((item) => {

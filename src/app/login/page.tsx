@@ -5,6 +5,8 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Loader2, User, UserPlus, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
+import Image from "next/image";
 
 function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -80,9 +82,15 @@ function AuthForm() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-4">
-            {isLogin ? <LogIn className="h-6 w-6" /> : <UserPlus className="h-6 w-6" />}
-          </div>
+          <Link href="/" className="inline-flex items-center mb-8">
+            <Image
+              src="/branding/logo-full.png"
+              alt="Modulab"
+              width={200}
+              height={56}
+              className="h-10 w-auto"
+            />
+          </Link>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">
             {isLogin ? "Sign in to account" : "Create an account"}
           </h2>
